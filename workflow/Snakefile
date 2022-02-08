@@ -1,0 +1,22 @@
+import numpy as np
+
+configfile: 'config.yaml'
+
+PARAMS = " ".join([f"--{k} {v}" for k, v in config.items()])
+
+rule all:
+    input: "figures/merge.tsv"
+
+rule simulation:
+    input: 'scripts/model.py',
+    output: "results/{lifespan}.tsv",
+    shell:
+        'python3 {input} {PARAMS} --output {output} --hotspot_lifespan {wildcards.lifespan}'
+
+rule merge_results:
+    input:
+        script='scripts/merge_results.py',
+        tsv=expand("results/{lifespan}.tsv",lifespan=map(int, np.linspace(0.5 * config["pop_size"],8 * config["pop_size"],30)))
+    output: "figures/merge.tsv"
+    shell:
+        'python3 {input.script} --input {input.tsv} --output {output}'

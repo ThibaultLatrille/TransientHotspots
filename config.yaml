@@ -1,0 +1,6 @@
+pop_size: 10000
+sel_coeff_mean: 0.0325
+sel_coeff_shape: 0.23
+b_hot: 0.002
+b_cold: 6e-6
+dominance_coeff: 0.5
