@@ -7,8 +7,13 @@ import time
 
 
 def simulation(args):
-    theta = args.sel_coeff_mean / args.sel_coeff_shape
-    s = np.random.gamma(args.sel_coeff_shape, theta)
+    s = args.sel_coeff_mean
+    if args.sel_coeff_shape > 0:
+        theta = args.sel_coeff_mean / args.sel_coeff_shape
+        while True:
+            s = np.random.gamma(args.sel_coeff_shape, theta)
+            if s < 1:
+                break
     der = 1
     t, t_max = 0, 100 * args.pop_size
     while der != 0 and der != 2 * args.pop_size:
@@ -26,8 +31,9 @@ def simulation(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--pop_size', required=False, type=int, default=10000, dest="pop_size")
+    parser.add_argument('--nb_sim', required=False, type=float, default=10000, dest="nb_sim")
     parser.add_argument('--sel_coeff_mean', required=False, type=float, default=0.0, dest="sel_coeff_mean")
-    parser.add_argument('--sel_coeff_shape', required=False, type=float, default=0.0, dest="sel_coeff_shape")
+    parser.add_argument('--sel_coeff_shape', required=False, type=float, default=-1.0, dest="sel_coeff_shape")
     parser.add_argument('--b_hot', required=False, type=float, default=0.01, dest="b_hot")
     parser.add_argument('--b_cold', required=False, type=float, default=0.0001, dest="b_cold")
     parser.add_argument('--dominance_coeff', required=False, type=float, default=0.5, dest="dominance_coeff")
@@ -36,16 +42,14 @@ if __name__ == '__main__':
     args_parse = parser.parse_args()
 
     assert args_parse.sel_coeff_mean >= 0.0
-    assert args_parse.sel_coeff_shape >= 0.0
     assert args_parse.dominance_coeff * args_parse.sel_coeff_mean < 1.0
 
     t_1 = time.perf_counter()
-    nb_sim = 10 ** 6
     results = defaultdict(list)
-    for replicate in range(nb_sim):
+    for replicate in range(int(args_parse.nb_sim)):
         x_f, t_f = simulation(args_parse)
         results["x_T"].append(x_f)
         results["T_fix"].append(t_f)
     pd.DataFrame(results).to_csv(args_parse.output, sep="\t")
     print(f"τ={args_parse.hotspot_lifespan}; Pfix={np.mean(results['x_T'])}.")
-    print(f"{time.perf_counter() - t_1:.2f}s for {nb_sim} simulations.")
+    print(f"{time.perf_counter() - t_1:.2f}s for {args_parse.nb_sim} simulations.")

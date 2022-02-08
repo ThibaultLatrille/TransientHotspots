@@ -1,22 +1,23 @@
 import numpy as np
 
 configfile: 'config.yaml'
-
+lifespan_list = map(int,np.linspace(0.5 * config["pop_size"],8 * config["pop_size"],15))
+sel_coeff_list = map(lambda x: f"{x:.2g}", np.logspace(np.log10(float(config["b_cold"])),np.log10(float(config["b_hot"])),5))
 PARAMS = " ".join([f"--{k} {v}" for k, v in config.items()])
 
 rule all:
-    input: "figures/merge.tsv"
+    input: expand("figures/{sel_coeff}_merge.tsv",sel_coeff=sel_coeff_list)
 
 rule simulation:
     input: 'scripts/model.py',
-    output: "results/{lifespan}.tsv",
+    output: "results/{sel_coeff}_{lifespan}.tsv",
     shell:
-        'python3 {input} {PARAMS} --output {output} --hotspot_lifespan {wildcards.lifespan}'
+        'python3 {input} {PARAMS} --output {output} --hotspot_lifespan {wildcards.lifespan} --sel_coeff_mean {wildcards.sel_coeff}'
 
 rule merge_results:
     input:
         script='scripts/merge_results.py',
-        tsv=expand("results/{lifespan}.tsv",lifespan=map(int, np.linspace(0.5 * config["pop_size"],8 * config["pop_size"],30)))
-    output: "figures/merge.tsv"
+        tsv=expand("results/{{sel_coeff}}_{lifespan}.tsv",lifespan=lifespan_list)
+    output: "figures/{sel_coeff}_merge.tsv"
     shell:
         'python3 {input.script} --input {input.tsv} --output {output}'

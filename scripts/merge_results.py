@@ -15,7 +15,7 @@ if __name__ == '__main__':
     output_dict = defaultdict(list)
     for file in args_parse.input:
         df = pd.read_csv(file, sep="\t")
-        lifespan = float(os.path.basename(file).replace(".tsv", ""))
+        lifespan = float(os.path.basename(file).replace(".tsv", "").split("_")[-1])
         pfix = np.mean(df["x_T"])
         t_fix = np.nanmean(df["T_fix"])
         output_dict["pfix"].append(pfix)
