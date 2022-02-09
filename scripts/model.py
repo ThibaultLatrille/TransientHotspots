@@ -6,7 +6,22 @@ import numpy as np
 import time
 
 
-def simulation(args):
+def x_prime(x, s, b, h):
+    xp = (1 - s) * x ** 2 + (1 + b) * (1 - h * s) * x * (1 - x)
+    xp /= (1 - s * x * x - 2 * h * s * x * (1.0 - x))
+    return min(1.0, max(0.0, xp))
+
+
+def simulation_det(args):
+    s = args.sel_coeff_mean
+    x = 1 / (2 * args.pop_size)
+    for t in range(args.hotspot_lifespan):
+        b = args.b_hot if t < args.hotspot_lifespan else args.b_cold
+        x = x_prime(x, s, b, args.hotspot_lifespan)
+    return x, args.hotspot_lifespan
+
+
+def simulation_stoch(args):
     s = args.sel_coeff_mean
     if args.sel_coeff_shape > 0:
         theta = args.sel_coeff_mean / args.sel_coeff_shape
@@ -19,8 +34,7 @@ def simulation(args):
     while der != 0 and der != 2 * args.pop_size:
         x = der / (2 * args.pop_size)
         b = args.b_hot if t < args.hotspot_lifespan else args.b_cold
-        x_prime = (1 - s) * x ** 2 + (1 + b) * (1 - args.dominance_coeff * s) * x * (1 - x)
-        der = np.random.binomial(2 * args.pop_size, min(1, x_prime))
+        der = np.random.binomial(2 * args.pop_size, x_prime(x, s, b, args.hotspot_lifespan))
         t += 1
         if t > t_max:
             return x, np.nan
@@ -38,18 +52,21 @@ if __name__ == '__main__':
     parser.add_argument('--b_cold', required=False, type=float, default=0.0001, dest="b_cold")
     parser.add_argument('--dominance_coeff', required=False, type=float, default=0.5, dest="dominance_coeff")
     parser.add_argument('--hotspot_lifespan', required=False, type=float, default=0.0, dest="hotspot_lifespan")
+    parser.add_argument('--determinist', required=False, type=bool, default=False, dest="determinist")
     parser.add_argument('--output', required=True, type=str, dest="output")
     args_parse = parser.parse_args()
 
     assert args_parse.sel_coeff_mean >= 0.0
     assert args_parse.dominance_coeff * args_parse.sel_coeff_mean < 1.0
+    if args_parse.determinist:
+        args_parse.nb_sim = 1
 
     t_1 = time.perf_counter()
     results = defaultdict(list)
     for replicate in range(int(args_parse.nb_sim)):
-        x_f, t_f = simulation(args_parse)
+        x_f, t_f = simulation_det(args_parse) if args_parse.determinist else simulation_stoch(args_parse)
         results["x_T"].append(x_f)
         results["T_fix"].append(t_f)
-    pd.DataFrame(results).to_csv(args_parse.output, sep="\t")
+    pd.DataFrame(results).to_csv(args_parse.output, sep="\t", compression="gzip")
     print(f"τ={args_parse.hotspot_lifespan}; Pfix={np.mean(results['x_T'])}.")
     print(f"{time.perf_counter() - t_1:.2f}s for {args_parse.nb_sim} simulations.")
