@@ -12,3 +12,12 @@ venv
 .idea/
 /results
 /figures
+*.nav
+*.snm
+*.pdf
+*.log
+*.aux
+*.out
+*.toc
+.ipynb_checkpoints/
+*.synctex.gz

@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 configfile: 'config.yaml'
 
@@ -8,25 +9,27 @@ def range_config(dic_scale, factor=1.0):
     return map(lambda x: f"{x:.2g}",l)
 
 
+folder = "results/" + config["experiment"]
+os.makedirs(f"{folder}/data",exist_ok=True)
 b_hot_list = range_config(config["scale"]["b_hot"])
 sel_coeff_list = range_config(config["scale"]["sel_coeff"])
-lifespan_list = [i * config["params"]["pop_size"] for i in config["scale"]["lifespan"]]
-params = " ".join([f"--{k} {v}" for k, v in config["params"].items()])
+hotspot_lifespan_list = [int(i * config["params"]["pop_size"]) for i in config["scale"]["hotspot_lifespan"]]
+simu_params = " ".join([f"--{k} {v}" for k, v in config["params"].items() if v != False])
 pop_size = config['params']['pop_size']
 
 rule all:
-    input: expand("figures/{b_hot}_{sel_coeff}_heatmap.tsv",b_hot=b_hot_list,sel_coeff=sel_coeff_list)
+    input: folder + "/heatmap.tsv"
 
 rule simulation:
     input: 'scripts/model.py',
-    output: "results/{b_hot}_{sel_coeff}_{lifespan}.tsv.gz",
+    output: folder + "/data/{b_hot}_{sel_coeff}_{hotspot_lifespan}.tsv.gz",
     shell:
-        'python3 {input} {params} --output {output} --b_hot {wildcards.b_hot} --hotspot_lifespan {wildcards.lifespan} --sel_coeff_mean {wildcards.sel_coeff}'
+        'python3 {input} {simu_params} --output {output} --b_hot {wildcards.b_hot} --hotspot_lifespan {wildcards.hotspot_lifespan} --sel_coeff_mean {wildcards.sel_coeff}'
 
 rule merge_results:
     input:
         script='scripts/merge_results.py',
-        tsv=expand("results/{{b_hot}}_{{sel_coeff}}_{lifespan}.tsv.gz",lifespan=lifespan_list)
-    output: "figures/{b_hot}_{sel_coeff}_heatmap.tsv"
+        tsv=expand(folder + "/data/{b_hot}_{sel_coeff}_{hotspot_lifespan}.tsv.gz",hotspot_lifespan=hotspot_lifespan_list,b_hot=b_hot_list,sel_coeff=sel_coeff_list)
+    output: folder + "/heatmap.tsv"
     shell:
-        'python3 {input.script} --input {input.tsv} --output {output} --pop_size {pop_size}'
+        'python3 {input.script} --input {folder}/data --output {output} --pop_size {pop_size}'
