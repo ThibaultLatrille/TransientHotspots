@@ -1,0 +1,20 @@
+experiment:
+  "stochastic_h0.5"
+params:
+  plot: False
+  determinist: False
+  pop_size: 10000
+  sel_coeff_shape: -1
+  b_cold: 6e-6
+  dominance_coeff: 0.5
+  nb_sim: 1e5
+scale:
+  b_hot:
+    min: 6e-6
+    max: 0.02
+    steps: 50
+  sel_coeff:
+    min: 6e-6
+    max: 0.02
+    steps: 50
+  hotspot_lifespan: [0.1, 0.25, 0.5, 8]

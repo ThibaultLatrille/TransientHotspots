@@ -16,11 +16,11 @@ def x_prime(x, s, b, h):
 def simulation_det(args, replicate):
     x, x_list = 1 / (2 * args.pop_size), []
     for t in range(args.hotspot_lifespan * (2 if args.plot else 1)):
+        b = args.b_hot if t < args.hotspot_lifespan else args.b_cold
         if args.plot:
             x_list.append(x)
-        b = args.b_hot if t < args.hotspot_lifespan else args.b_cold
-        if replicate == 0:
-            b = args.b_hot
+            if replicate == 0:
+                b = args.b_hot
         x = x_prime(x, args.sel_coeff_mean, b, args.dominance_coeff)
     if args.plot:
         plt.plot(range(len(x_list)), x_list, ls=('--' if replicate == 0 else "-"),
@@ -28,7 +28,7 @@ def simulation_det(args, replicate):
     return x, args.hotspot_lifespan
 
 
-def simulation_stoch(args, replicate):
+def simulation_stoch(args):
     s = args.sel_coeff_mean
     if args.sel_coeff_shape > 0:
         theta = args.sel_coeff_mean / args.sel_coeff_shape
@@ -73,11 +73,14 @@ if __name__ == '__main__':
     assert args_parse.dominance_coeff * args_parse.sel_coeff_mean < 1.0
     if args_parse.determinist:
         args_parse.nb_sim = 2
+    if args_parse.plot:
+        my_dpi = 256 + 128
+        plt.figure(figsize=(1920 / my_dpi, 1080 / my_dpi), dpi=my_dpi)
 
     t_1 = time.perf_counter()
     results = defaultdict(list)
     for i in range(int(args_parse.nb_sim)):
-        x_f, t_f = simulation_det(args_parse, i) if args_parse.determinist else simulation_stoch(args_parse, i)
+        x_f, t_f = simulation_det(args_parse, i) if args_parse.determinist else simulation_stoch(args_parse)
         results["x_T"].append(x_f)
         results["T_fix"].append(t_f)
     pd.DataFrame(results).to_csv(args_parse.output, sep="\t", compression="gzip")

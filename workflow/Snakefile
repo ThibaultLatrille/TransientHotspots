@@ -6,19 +6,18 @@ configfile: 'config.yaml'
 
 def range_config(dic_scale, factor=1.0):
     l = factor * np.linspace(float(dic_scale["min"]),float(dic_scale["max"]),dic_scale["steps"])
-    return map(lambda x: f"{x:.2g}",l)
+    return set(map(lambda x: f"{x:.2g}",l))
 
 
 folder = "results/" + config["experiment"]
 os.makedirs(f"{folder}/data",exist_ok=True)
 b_hot_list = range_config(config["scale"]["b_hot"])
 sel_coeff_list = range_config(config["scale"]["sel_coeff"])
-hotspot_lifespan_list = [int(i * config["params"]["pop_size"]) for i in config["scale"]["hotspot_lifespan"]]
+hotspot_lifespan_list = [str(int(i * config["params"]["pop_size"])) for i in config["scale"]["hotspot_lifespan"]]
 simu_params = " ".join([f"--{k} {v}" for k, v in config["params"].items() if v != False])
-pop_size = config['params']['pop_size']
 
 rule all:
-    input: folder + "/heatmap.tsv"
+    input: folder + "/heatmap_inf.pdf"
 
 rule simulation:
     input: 'scripts/model.py',
@@ -32,4 +31,14 @@ rule merge_results:
         tsv=expand(folder + "/data/{b_hot}_{sel_coeff}_{hotspot_lifespan}.tsv.gz",hotspot_lifespan=hotspot_lifespan_list,b_hot=b_hot_list,sel_coeff=sel_coeff_list)
     output: folder + "/heatmap.tsv"
     shell:
-        'python3 {input.script} --input {folder}/data --output {output} --pop_size {pop_size}'
+        'python3 {input.script} --input {folder}/data --output {output}'
+
+rule plot_heatmap:
+    input:
+        script='scripts/plot_heatmap.py',
+        tsv=folder + "/heatmap.tsv"
+    output: folder + "/heatmap_inf.pdf"
+    params:
+        load="" if config["params"]["determinist"] else "--load True"
+    shell:
+        'python3 {input.script} --input {input.tsv} {params.load} --output {folder}/heatmap'

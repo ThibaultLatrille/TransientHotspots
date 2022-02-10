@@ -1,10 +1,14 @@
-\documentclass[8pt]{beamer}
+\documentclass[8pt,aspectratio=169]{beamer}
 
 \usepackage{amssymb,amsfonts,amsmath,amsthm,mathtools}
 \usepackage{lmodern}
 \usepackage{xfrac, nicefrac}
 \usepackage{pgfplots, pgf,tikz}
 \usepackage{enumitem}
+\usepackage{tabu}
+\usepackage{adjustbox}
+\usepackage{bm}
+\usepackage{wasysym}
 \usepgfplotslibrary{fillbetween}
 \usebackgroundtemplate{\tikz\node[opacity=0]{};}
 \setbeamertemplate{footline}[frame number]{}
@@ -13,19 +17,6 @@
 \usefonttheme{serif}
 \pgfplotsset{compat=1.16}
 
-\definecolor{RED}{HTML}{EB6231}
-\definecolor{YELLOW}{HTML}{E29D26}
-\definecolor{BLUE}{HTML}{5D80B4}
-\definecolor{LIGHTGREEN}{HTML}{6ABD9B}
-\definecolor{GREEN}{HTML}{8FB03E}
-\definecolor{PURPLE}{HTML}{BE1E2D}
-\definecolor{BROWN}{HTML}{A97C50}
-\definecolor{PINK}{HTML}{DA1C5C}
-
-\pgfplotsset{every axis/.append style={line width=1pt}}
-\pgfplotscreateplotcyclelist{colors}{LIGHTGREEN\\YELLOW\\RED\\GREEN\\BLUE\\}
-
-
 \newcommand{\der}{\mathrm{d}}
 \newcommand{\e}{\text{e}}
 \newcommand{\Ne}{N_{\text{e}}}
@@ -33,65 +24,65 @@
 \newcommand{\proba}{\mathbb{P}}
 \newcommand{\pfix}{\proba_{\text{fix}}}
 
-\newcommand{\ci}{{\color{BLUE}{\textbf{ATT}}}}
-\newcommand{\cj}{{\color{YELLOW}\textbf{ATG}}}
-\newcommand{\nuci}{{\color{BLUE}\textbf{T}}}
-\newcommand{\nucj}{{\color{YELLOW}\textbf{G}}}
-\newcommand{\aai}{{\color{BLUE}\textbf{Ile}}}
-\newcommand{\aaj}{{\color{YELLOW}\textbf{Met}}}
-\newcommand{\Fi}{{F_{\aai}}}
-\newcommand{\Fj}{{F_{\aaj}}}
-\newcommand{\aaitoj}{{\aai \rightarrow \aaj}}
-\newcommand{\nucitoj}{\nuci \rightarrow \nucj}
-\newcommand{\citoj}{\ci \rightarrow \cj}
-\newcommand{\AtoB}{A \rightarrow B}
-\newcommand{\itoj}{ i \rightarrow j }
-
 \begin{document}
-	\begin{frame}
-		\begin{itemize}[label=$\bullet$]
-		\item Subset of mutations: from weak (AT) to strong (GC).
-		\item Under gBGC with conversion rate $b$ (for heterozygous).
-		\item Mutation are deleterious with selection coefficient $s$ (homozygous) and $hs$ (heterozygous).
-		\item $x_{t}$ is the frequency of the allele at time $t$.
-		\end{itemize}
-		\begin{equation*}
-			\begin{dcases}
-				x_{t+1} & \sim \mathcal{B} \left( \Ne, x_{t}' \right)  \\
-				x_{t}' & = (1 - s)x_{t}^2 + (1 + b)(1 - hs)x_{t} (1 - x_{t}) \\
-			\end{dcases}
-		\end{equation*}
-	\end{frame}
-	\begin{frame}
-		\centering
-		\begin{tikzpicture}
-			\begin{axis}[
-				width=\textwidth,
-				height=0.5\textwidth,
-				ylabel={Relative fixation probability},
-				xlabel={Scaled selection coefficient ($S=4 \Ne s$)},
-				cycle list name=colors,
-				domain=-5:5,
-				ymin=0.0, ymax=5.0,
-				samples=200,
-				legend entries={$\frac{S}{1 - \e^{-S}}$},
-				legend cell align=left,
-				minor tick num=2,
-				axis x line=bottom,
-				axis y line=left,
-				legend style={at={(0.02,0.9)},anchor=north west}
-				]
-				\addplot[line width=2.0pt, BLUE]{ x / (1 - exp(- x))};
-				\addplot[name path=B, dashed, YELLOW, line width=0.5pt] coordinates {(-1, 0) (-1, 5)};
-				\addplot[name path=A, line width=0pt] coordinates {(-5, 0) (-5, 5)};
-				\addplot[black, dashed, line width=1.0pt]{1.0};
-				\addplot[black, dashed, line width=1.0pt] coordinates {(0, 0) (0, 5)};
-				\addplot[name path=C, dashed, YELLOW, line width=0.5pt] coordinates {(1, 0) (1, 5)};
-				\addplot[name path=D, line width=0pt] coordinates {(5, 0) (5, 5)};
-				\addplot[fill=RED, opacity=0.2] fill between[ of = A and B];
-				\addplot[fill=YELLOW, opacity=0.2] fill between[ of = B and C];
-				\addplot[fill=GREEN, opacity=0.2] fill between[ of = C and D];
-			\end{axis}
-		\end{tikzpicture}
-	\end{frame}
+    \begin{frame}
+        Let $x_{t}$ be the frequency of a strong (GC) allele at time $t$.
+        \begin{itemize}
+            [label=$\bullet$]
+            \item We consider deleterious mutations from weak (AT) to strong (GC), with selection coefficient $s$ and dominance $h$.
+            \item We consider that weak alleles are converted to strong allele in heterozygous due to gBGC with conversion rate $b$.
+        \end{itemize}
+        \begin{center}
+            \begin{tabu}{|l||c|c|c|}
+                \hline
+                \textbf{Genotype}  & \textbf{Homozygous} $\bm{SS}$ & \textbf{Heterozygous} $\bm{WS}$ & \textbf{Homozygous} $\bm{WW}$ \\ \hline
+                \textbf{Frequency} & $x_{t}^2$                     & $2x_{t}(1-x_{t})$               & $(1 - x_{t})^2$               \\ \hline
+                \textbf{Fitness}   & $1-s$                         & $1-h s$                         & $1$                           \\ \hline
+            \end{tabu}
+        \end{center}
+        The frequency of a strong allele at the next generation ($x_{t+1}$) is thus:
+        \begin{align*}
+            x_{t+1} = \frac{(1 - s)x_{t}^2 + (1 + b)(1 - h s)x_{t} (1 - x_{t})}{\bar{\omega}}.
+        \end{align*}
+        And the mean fitness ($\bar{\omega}$) is:
+        \begin{align*}
+            \bar{\omega} & = (1 - s)x_{t}^2 + (1 - h s) 2 x_{t} (1 - x_{t}) + (1 - x_{t})^2, \\
+            & = 1 - s x_{t}^2 - 2 h s x_{t} (1 - x_{t}).
+        \end{align*}
+    \end{frame}
+    \begin{frame}
+        At equilibrium, the frequency of a strong allele is:
+        \begin{gather*}
+            x_{\text{eq}} = \frac{(1 - s) x_{\text{eq}}^2 + (1 + b)(1 - h s) x_{\text{eq}} (1 -  x_{\text{eq}})}{1 - s x_{\text{eq}}^2 - 2 h s x_{\text{eq}} (1 -  x_{\text{eq}})}, \\
+            \Rightarrow x_{\text{eq}} = \frac{b-h s}{s-2h s} \text{ if } h < 1/2.
+        \end{gather*}
+    \end{frame}
+    \begin{frame}
+        Under a stochastic model, the number of strong alleles is drawn from a binomial distribution:
+        \begin{align*}
+            x_{t+1} & \sim \frac{1}{2 \Ne}\mathcal{B} \left( 2 \Ne, p \right), \\
+            p &= \frac{(1 - s)x_{t}^2 + (1 + b)(1 - h s)x_{t} (1 - x_{t})}{\bar{\omega}}.
+        \end{align*}
+    \end{frame}
+    \begin{frame}
+        The hotspots are unstable, with lifespan $\tau$:
+        \begin{gather*}
+            \begin{dcases}
+                t < \tau & \Rightarrow b=b_{\text{hot}}=0.02, \\
+                t > \tau & \Rightarrow b=b_{\text{cold}}=6\times 10^{-6}. \\
+            \end{dcases}
+        \end{gather*}
+    \end{frame}
+    \begin{frame}
+        The probability of fixation for a GC allele is $\pfix$, and the fixation load $L$ is defined as:
+        \begin{equation*}
+            L= s \pfix
+        \end{equation*}
+        \begin{equation*}
+            \begin{dcases}
+                L_{\tau} \text{ is the load for an unstable hotspot (lifespan $t=\tau$),} \\
+                L_{\infty} \text{ is the load for a constant hotspot.}
+            \end{dcases}
+        \end{equation*}
+    \end{frame}
 \end{document}

@@ -19,5 +19,6 @@ venv
 *.aux
 *.out
 *.toc
+*.idlk
 .ipynb_checkpoints/
 *.synctex.gz

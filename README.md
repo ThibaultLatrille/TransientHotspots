@@ -12,7 +12,7 @@ cd TransientHotspots
 
 Install python3 packages
 ```
-sudo apt install -qq -y snakemake python3-pandas python3-pip
+sudo apt install -qq -y snakemake python3-pandas python3-numpy python3-matplotlib
 ```
 
 ## 2. Run snakemake
